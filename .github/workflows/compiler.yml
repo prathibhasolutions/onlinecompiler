@@ -1,0 +1,51 @@
+name: Online Compiler
+
+on:
+  repository_dispatch:
+    types: [run_code]
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache
+            ~/.m2
+            ~/.javacache
+          key: compiler-${{ runner.os }}-${{ github.event.client_payload.language }}-${{ github.run_id }}
+          restore-keys: |
+            compiler-${{ runner.os }}-${{ github.event.client_payload.language }}-
+
+      - name: Run Python Code
+        if: github.event.client_payload.language == 'python'
+        run: |
+          echo "${{ github.event.client_payload.code }}" > code.py
+          python3 code.py
+
+      - name: Run Java Code
+        if: github.event.client_payload.language == 'java'
+        run: |
+          echo "${{ github.event.client_payload.code }}" > Main.java
+          javac Main.java
+          java Main
+
+      - name: Run C Code
+        if: github.event.client_payload.language == 'c'
+        run: |
+          echo "${{ github.event.client_payload.code }}" > main.c
+          gcc main.c -o main
+          ./main
+
+      - name: Run C++ Code
+        if: github.event.client_payload.language == 'cpp'
+        run: |
+          echo "${{ github.event.client_payload.code }}" > main.cpp
+          g++ main.cpp -o main
+          ./main
